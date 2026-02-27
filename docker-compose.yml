@@ -1,7 +1,9 @@
+
 services:
   bot:
     build: .
     image: rage-against-the-meshine:local
+    restart: unless-stopped
     environment:
     - DISCORD_TOKEN=${DISCORD_TOKEN}
     - DISCORD_CLIENT_ID=${DISCORD_CLIENT_ID}
@@ -17,6 +19,7 @@ services:
     - ENVIRONMENT=${ENVIRONMENT}
     - NODE_INFO_UPDATES=${NODE_INFO_UPDATES}
     - SEND_POSITION_UPDATES=${SEND_POSITION_UPDATES}
+    - MESHVIEW_BASE_URL=${MESHVIEW_BASE_URL}
     depends_on:
       redis:
         condition: service_healthy

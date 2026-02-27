@@ -118,7 +118,7 @@ export const createDiscordMessage = async (packetGroup, text, balloonNode, clien
 
     infoFields.push({
       name: "Packet",
-      value: `[${packetGroup.id.toString(16)}](https://meshview.bayme.sh/packet/${packetGroup.id})`,
+      value: `[${packetGroup.id.toString(16)}](${process.env.MESHVIEW_BASE_URL}/packet/${packetGroup.id})`,
       inline: true,
     });
 
@@ -197,7 +197,7 @@ export const createDiscordMessage = async (packetGroup, text, balloonNode, clien
 
         const gatewayFieldText =
           `[${gatewayDisplayName} ${hopText}` +
-          `](https://meshview.bayme.sh/packet_list/${nodeHex2id(envelope.gatewayId.replace("!", ""))})`;
+          `](${process.env.MESHVIEW_BASE_URL}/packet_list/${nodeHex2id(envelope.gatewayId.replace("!", ""))})`;
 
         if (!gatewayGroups[hopGroup]) {
           gatewayGroups[hopGroup] = [];
@@ -261,13 +261,13 @@ export const createDiscordMessage = async (packetGroup, text, balloonNode, clien
         "https://cdn.discordapp.com/app-icons/1240017058046152845/295e77bec5f9a44f7311cf8723e9c332.png",
       embeds: [
         {
-          url: `https://meshview.bayme.sh/packet_list/${packet.from}`,
+          url: `${process.env.MESHVIEW_BASE_URL}/packet_list/${packet.from}`,
           color: 6810260,
           timestamp: new Date(packet.rxTime * 1000).toISOString(),
 
           author: {
             name: `${nodeInfos[nodeIdHex] ? nodeInfos[nodeIdHex].longName : "Unknown"}`,
-            url: `https://meshview.bayme.sh/packet_list/${packet.from}`,
+            url: `${process.env.MESHVIEW_BASE_URL}/packet_list/${packet.from}`,
             icon_url: avatarUrl,
           },
           title: `${nodeInfos[nodeIdHex] ? nodeInfos[nodeIdHex].shortName : "UNK"}`,
