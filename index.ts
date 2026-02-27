@@ -9,8 +9,7 @@ import {
   userMention,
 } from "discord.js";
 import { fileURLToPath } from "url";
-import path, { dirname } from "path";
-import protobufjs from "protobufjs";
+import { dirname } from "path";
 import crypto from "crypto";
 import mqtt from "mqtt";
 
@@ -41,14 +40,15 @@ const DISCORD_CLIENT_ID = process.env["DISCORD_CLIENT_ID"];
 const DISCORD_TOKEN = process.env["DISCORD_TOKEN"];
 const DISCORD_GUILD = process.env["DISCORD_GUILD"];
 const DISCORD_CHANNEL_LF = process.env["DISCORD_CHANNEL_LF"];
-const DISCORD_CHANNEL_MS = process.env["DISCORD_CHANNEL_MS"];
+const DISCORD_CHANNEL_MF = process.env["DISCORD_CHANNEL_MF"];
 const DISCORD_CHANNEL_HAB = process.env["DISCORD_CHANNEL_HAB"];
 const REDIS_URL = process.env["REDIS_URL"];
 const NODE_INFO_UPDATES = process.env["NODE_INFO_UPDATES"] === "1";
+const SEND_POSITION_UPDATES = process.env["SEND_POSITION_UPDATES"] === "1";
 const MQTT_BROKER_URL = process.env["MQTT_BROKER_URL"];
 const MQTT_TOPICS = JSON.parse(process.env["MQTT_TOPICS"] || "[]");
-const MQTT_USERNAME = JSON.parse(process.env["MQTT_USERNAME"] || "meshdev");
-const MQTT_PASSWORD = JSON.parse(process.env["MQTT_PASSWORD"] || "large4cats");
+const MQTT_USERNAME = process.env["MQTT_USERNAME"] || "meshdev";
+const MQTT_PASSWORD = process.env["MQTT_PASSWORD"] || "large4cats";
 
 if (MQTT_BROKER_URL === undefined || MQTT_BROKER_URL.length === 0) {
   throw new Error("MQTT_BROKER_URL is not set");
@@ -72,18 +72,6 @@ if (DISCORD_GUILD === undefined || DISCORD_GUILD.length === 0) {
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-
-// load protobufs
-const root = new protobufjs.Root();
-root.resolvePath = (origin, target) =>
-  path.join(__dirname, "src/protobufs", target);
-root.loadSync("meshtastic/mqtt.proto");
-const Data = root.lookupType("Data");
-const ServiceEnvelope = root.lookupType("ServiceEnvelope");
-const Position = root.lookupType("Position");
-const User = root.lookupType("User");
-
-export { Data, ServiceEnvelope, Position, User };
 
 const discordMessageIdCache = new FifoCache<string, string>();
 const meshPacketCache = new MeshPacketCache();
@@ -128,7 +116,7 @@ client.once("ready", () => {
   }
 
   const lfChannel = fetchDiscordChannel(guild, DISCORD_CHANNEL_LF);
-  const msChannel = fetchDiscordChannel(guild, DISCORD_CHANNEL_MS);
+  const mfChannel = fetchDiscordChannel(guild, DISCORD_CHANNEL_MF);
   const habChannel = fetchDiscordChannel(guild, DISCORD_CHANNEL_HAB);
 
   // Connect to the MQTT broker.
@@ -375,7 +363,7 @@ client.once("ready", () => {
             packetGroup.serviceEnvelopes[0].packet.decoded.payload.toString(),
         );
       }
-      processTextMessage(packetGroup, client, guild, discordMessageIdCache, habChannel, msChannel, lfChannel);
+      processTextMessage(packetGroup, client, guild, discordMessageIdCache, habChannel, mfChannel, lfChannel);
     });
   }, 5000);
 
@@ -396,7 +384,7 @@ client.once("ready", () => {
   });
 
   mqttClient.on("message", async (topic, message) => {
-    await handleMqttMessage(topic, message, MQTT_TOPICS, meshPacketCache, NODE_INFO_UPDATES, MQTT_BROKER_URL);
+    await handleMqttMessage(topic, message, MQTT_TOPICS, meshPacketCache, NODE_INFO_UPDATES, SEND_POSITION_UPDATES, MQTT_BROKER_URL);
   });
 });
 

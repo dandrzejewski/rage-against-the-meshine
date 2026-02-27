@@ -1,17 +1,30 @@
-version: '3.8'
-
 services:
   bot:
-    image: ghcr.io/baymesh/rage-against-the-meshine-nextgen:latest
+    build: .
+    image: rage-against-the-meshine:local
     environment:
     - DISCORD_TOKEN=${DISCORD_TOKEN}
     - DISCORD_CLIENT_ID=${DISCORD_CLIENT_ID}
     - DISCORD_GUILD=${DISCORD_GUILD}
     - DISCORD_CHANNEL_LF=${DISCORD_CHANNEL_LF}
-    - DISCORD_CHANNEL_MS=${DISCORD_CHANNEL_MS}
+    - DISCORD_CHANNEL_MF=${DISCORD_CHANNEL_MF}
     - DISCORD_CHANNEL_HAB=${DISCORD_CHANNEL_HAB}
     - MQTT_BROKER_URL=${MQTT_BROKER_URL}
     - MQTT_TOPICS=${MQTT_TOPICS}
-    - REDIS_URL=${REDIS_URL}
+    - MQTT_USERNAME=${MQTT_USERNAME}
+    - MQTT_PASSWORD=${MQTT_PASSWORD}
+    - REDIS_URL=redis://redis:6379
     - ENVIRONMENT=${ENVIRONMENT}
     - NODE_INFO_UPDATES=${NODE_INFO_UPDATES}
+    - SEND_POSITION_UPDATES=${SEND_POSITION_UPDATES}
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  redis:
+    image: redis/redis-stack-server:latest
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5

@@ -1,11 +1,11 @@
-import { ServiceEnvelope, Position, User } from "../index";
+import { ServiceEnvelope, Position, User } from "./Protobufs";
 import MeshPacketCache from "./MeshPacketCache";
 import { decrypt } from "./decrypt";
 import meshRedis from "./MeshRedis";
 import { nodeId2hex } from "./NodeUtils";
 import logger from "./Logger";
 
-const handleMqttMessage = async (topic, message, MQTT_TOPICS, meshPacketCache, NODE_INFO_UPDATES, MQTT_BROKER_URL) => {
+const handleMqttMessage = async (topic, message, MQTT_TOPICS, meshPacketCache, NODE_INFO_UPDATES, SEND_POSITION_UPDATES, MQTT_BROKER_URL) => {
   try {
     if (topic.includes("msh")) {
       if (!topic.includes("/json")) {
@@ -48,10 +48,7 @@ const handleMqttMessage = async (topic, message, MQTT_TOPICS, meshPacketCache, N
           if (portnum === 1) {
             meshPacketCache.add(envelope, topic, MQTT_BROKER_URL);
           } else if (portnum === 3) {
-            const from = envelope.packet.from.toString(16);
-            const isTrackerNode = await meshRedis.isTrackerNode(from);
-            const isBalloonNode = await meshRedis.isBalloonNode(from);
-            if (!isTrackerNode && !isBalloonNode) {
+            if (!SEND_POSITION_UPDATES) {
               return;
             }
             const position = Position.decode(envelope.packet.decoded.payload);
@@ -61,7 +58,6 @@ const handleMqttMessage = async (topic, message, MQTT_TOPICS, meshPacketCache, N
             meshPacketCache.add(envelope, topic, MQTT_BROKER_URL);
           } else if (portnum === 4) {
             if (!NODE_INFO_UPDATES) {
-              logger.info("Node info updates disabled");
               return;
             }
             const user = User.decode(envelope.packet.decoded.payload);
@@ -72,6 +68,7 @@ const handleMqttMessage = async (topic, message, MQTT_TOPICS, meshPacketCache, N
               user,
               envelope.packet.hopStart,
             );
+            meshPacketCache.add(envelope, topic, MQTT_BROKER_URL);
           }
         }
       }

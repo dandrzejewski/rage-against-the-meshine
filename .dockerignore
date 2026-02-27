@@ -12,3 +12,4 @@ venv/
 *.log
 __snapshots__/
 *.sqlite3
+src/protobufs

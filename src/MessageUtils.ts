@@ -3,7 +3,7 @@ import { createDiscordMessage } from "./DiscordMessageUtils";
 import meshRedis from "./MeshRedis";
 import logger from "./Logger";
 
-const processTextMessage = async (packetGroup, client, guild, discordMessageIdCache, habChannel, msChannel, lfChannel) => {
+const processTextMessage = async (packetGroup, client, guild, discordMessageIdCache, habChannel, mfChannel, lfChannel) => {
   const packet = packetGroup.serviceEnvelopes[0].packet;
   let text = packet.decoded.payload.toString();
   const to = nodeId2hex(packet.to);
@@ -11,6 +11,8 @@ const processTextMessage = async (packetGroup, client, guild, discordMessageIdCa
 
   if (portNum === 3) {
     text = "Position Packet";
+  } else if (portNum === 4) {
+    text = "Node Info Update";
   }
 
   // discard text messages in the form of "seq 6034" "seq 6025"
@@ -18,7 +20,8 @@ const processTextMessage = async (packetGroup, client, guild, discordMessageIdCa
     return;
   }
 
-  if (process.env.ENVIRONMENT === "production" && to !== "ffffffff") {
+  // for text messages only, drop non-broadcast messages in production
+  if (portNum === 1 && process.env.ENVIRONMENT === "production" && to !== "ffffffff") {
     logger.info(
       `MessageId: ${packetGroup.id} Not to public channel: ${packetGroup.serviceEnvelopes.map((envelope) => envelope.topic)}`,
     );
@@ -45,8 +48,8 @@ const processTextMessage = async (packetGroup, client, guild, discordMessageIdCa
     if (balloonNode) {
       return habChannel;
     }
-    if (channelId === "MediumSlow") {
-      return msChannel;
+    if (channelId === "MediumFast") {
+      return mfChannel;
     } else if (channelId === "LongFast") {
       return lfChannel;
     } else if (channelId === "HAB") {

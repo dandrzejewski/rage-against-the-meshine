@@ -3,6 +3,7 @@ import { nodeHex2id, nodeId2hex } from "./NodeUtils";
 import meshRedis from "./MeshRedis";
 import logger from "./Logger";
 import { DecodedPosition, decodedPositionToString } from "./MeshPacketCache";
+import { Position, User } from "./Protobufs";
 
 export const createDiscordMessage = async (packetGroup, text, balloonNode, client, guild) => {
   try {
@@ -96,6 +97,13 @@ export const createDiscordMessage = async (packetGroup, text, balloonNode, clien
         logger.error(e);
       }
       mapUrl = `https://api.smerty.org/api/v1/maps/static?lat=${position.latitudeI / 10000000}&lon=${position.longitudeI / 10000000}&width=400&height=400&zoom=12`;
+    } else if (portNum === 4) {
+      const user = User.decode(packet.decoded.payload);
+      infoFields.push({ name: "Long Name", value: user.longName || "Unknown", inline: true });
+      infoFields.push({ name: "Short Name", value: user.shortName || "UNK", inline: true });
+      if (user.hwModel) {
+        infoFields.push({ name: "Hardware", value: String(user.hwModel), inline: true });
+      }
     }
 
     logger.info(mapUrl);
